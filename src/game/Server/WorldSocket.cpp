@@ -34,6 +34,9 @@
 #include "Server/DBCStores.h"
 #include "Util/CommonDefines.h"
 #include "Anticheat/Anticheat.hpp"
+#ifdef BUILD_ELUNA
+#include "LuaEngine/LuaEngine.h"
+#endif
 
 #include <chrono>
 #include <functional>
@@ -219,7 +222,12 @@ bool WorldSocket::ProcessIncomingData()
                             sLog.outError("WorldSocket::ProcessIncomingData: Player send CMSG_AUTH_SESSION again");
                             return;
                         }
-
+#ifdef BUILD_ELUNA
+                        if (!sEluna->OnPacketReceive(self->m_session, *pct))
+                        {
+                            return;
+                        }
+#endif
                         if (!self->HandleAuthSession(*pct))
                             return;
                         break;
@@ -229,6 +237,9 @@ bool WorldSocket::ProcessIncomingData()
                         break;
                     case CMSG_KEEP_ALIVE:
                         DEBUG_LOG("CMSG_KEEP_ALIVE, size: " SIZEFMTD " ", pct->size());
+#ifdef BUILD_ELUNA
+                        sEluna->OnPacketReceive(self->m_session, *pct);
+#endif
                         break;
                     case CMSG_TIME_SYNC_RESP:
                         pct->SetReceivedTime(std::chrono::steady_clock::now());
